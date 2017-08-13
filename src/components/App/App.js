@@ -1,108 +1,90 @@
 import React, { Component } from 'react'
-import TovarCoinCrowdsale from '../../../build/contracts/TovarCoinCrowdsale';
-import TovarCoin from '../../../build/contracts/TovarCoin.json'
-import getWeb3 from '../../utils/getWeb3'
 
-import BigNumber from 'bignumber.js';
-import co from 'co';
-import _ from 'co-each';
+import {
+  BrowserRouter as Router,
+  Route,
+} from 'react-router-dom';
+import injectTapEventPlugin from 'react-tap-event-plugin';
 
-import '../../css/oswald.css'
-import '../../css/open-sans.css'
-import '../../css/pure-min.css'
-import './App.css'
+import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
+import getMuiTheme from 'material-ui/styles/getMuiTheme';
+
+let  _colors = require('material-ui/styles/colors');
+let _colorManipulator = require('material-ui/utils/colorManipulator');
+
+let _spacing = require('material-ui/styles/spacing');
+
+let _spacing2 = _interopRequireDefault(_spacing);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+injectTapEventPlugin();
+
+const muiTheme = getMuiTheme({
+  spacing: _spacing2.default,
+  fontFamily: 'Roboto, sans-serif',
+  borderRadius: 2,
+  palette: {
+    primary1Color: _colors.purple700,
+    primary2Color: _colors.purple700,
+    primary3Color: _colors.grey600,
+    accent1Color: _colors.indigoA200,
+    accent2Color: _colors.indigoA400,
+    accent3Color: _colors.indigoA700,
+    textColor: _colors.fullWhite,
+    secondaryTextColor: (0, _colorManipulator.fade)(_colors.fullWhite, 0.7),
+    alternateTextColor: _colors.fullWhite,
+    canvasColor: '#303030',
+    borderColor: (0, _colorManipulator.fade)(_colors.fullWhite, 0.3),
+    disabledColor: (0, _colorManipulator.fade)(_colors.fullWhite, 0.3),
+    pickerHeaderColor: (0, _colorManipulator.fade)(_colors.fullWhite, 0.12),
+    clockCircleColor: (0, _colorManipulator.fade)(_colors.fullWhite, 0.12)
+  }
+})
+
+import Home from '../Home/Home';
+import TokenFunctions from '../TokenFunctions/TokenFunctions';
+import Crowdsale from '../Crowdsale/Crowdsale';
+import Nav from '../Nav/Nav';
+import MainDrawer from '../MainDrawer/MainDrawer';
 
 class App extends Component {
+
   constructor(props) {
-    super(props)
+    super(props);
 
     this.state = {
-      name: null,
-      crowdsaleInstance: null,
-      crowdsaleDetails: {
-        address: null,
-        endBlock: null,
-        hasEnded: null,
-        rate: null,
-        startBlock: null,
-        token: null,
-        wallet: null,
-        weiRaised: null
-      },
-      web3: null
+      drawerOpen: false
     }
+
   }
 
-  componentWillMount() {
-
-    getWeb3
-    .then(results => {
-      this.setState({
-        web3: results.web3
-      })
-
-
-      this.instantiateContract()
-    })
-    .catch(() => {
-      console.log('Error finding web3.')
-    })
-  }
-
-  instantiateContract() {
-
-    const contract = require('truffle-contract')
-    const crowdsale = contract(TovarCoinCrowdsale)
-    crowdsale.setProvider(this.state.web3.currentProvider)
-
-    crowdsale.deployed()
-      .then((instance) => {
-        this.setState({crowdSaleInstance: instance})
-        this.setContractDetails(instance);
-      })
-  }
-
-  setContractDetails(crowdsale) {
-    const that = this;
-    co(function* () {
-      let crowdsaleDetails = {};
-      crowdsaleDetails.endBlock = new BigNumber(yield crowdsale.endBlock()).toString(10);
-      crowdsaleDetails.hadEnded = yield crowdsale.hasEnded();
-      crowdsaleDetails.rate = new BigNumber(yield crowdsale.rate()).toString(10);
-      crowdsaleDetails.startBlock = new BigNumber(yield crowdsale.startBlock()).toString(10);
-      crowdsaleDetails.token = yield crowdsale.token();
-      crowdsaleDetails.wallet = yield crowdsale.wallet();
-      crowdsaleDetails.weiRaised = new BigNumber(yield crowdsale.weiRaised()).toString(10);
-
-      that.setState({
-        crowdsaleDetails: crowdsaleDetails
-      })
+  toggleDrawer = () => {
+    this.setState({
+      drawerOpen: !this.state.drawerOpen
     });
-
   }
 
   render() {
+
     return (
-      <div className="App">
-        <nav className="navbar pure-menu pure-menu-horizontal">
-            <a href="#" className="pure-menu-heading pure-menu-link">Truffle Box</a>
-        </nav>
 
-        <main className="container">
-          <div className="pure-g">
-            <div className="pure-u-1-1">
+      <MuiThemeProvider muiTheme={getMuiTheme(muiTheme)}>
+        <Router>
+          <div>
+            <Nav toggleDrawer={this.toggleDrawer}/>
+            <MainDrawer
+              drawerOpen={this.state.drawerOpen}
+              toggleDrawer={this.toggleDrawer}
+            />
+            <Route exact path="/" component={Home}/>
+            <Route exact path="/Crowdsale" component={Crowdsale}/>
+            <Route exact path="/TokenFunctions" component={TokenFunctions}/>
 
-              <p>The end block is: {this.state.crowdsaleDetails.endBlock}</p>
-              <p>Crowdsale has ended: {this.state.crowdsaleDetails.hasEnded ? 'YES' : 'NO'}</p>
-              <p>The current exchange rate is: TVR {this.state.crowdsaleDetails.rate}/ETH 1</p>
-              <p>The start block is: {this.state.crowdsaleDetails.startBlock}</p>
-              <p>The token contract address is: {this.state.crowdsaleDetails.token}</p>
-              <p>The fund collection wallet is: {this.state.crowdsaleDetails.wallet}</p>
-              <p>Wei Raised so far: {this.state.crowdsaleDetails.weiRaised}</p>
-            </div>
           </div>
-        </main>
-      </div>
+        </Router>
+      </MuiThemeProvider>
+
     );
   }
 }
