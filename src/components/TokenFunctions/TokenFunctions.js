@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import TovarCoinCrowdsale from '../../../build/contracts/TovarCoinCrowdsale';
 import TovarCoin from '../../../build/contracts/TovarCoin';
-import tvcUtils from './tovarCoinUtils.js';
+import contractToPromise from '../../utils/contractToPromise';
 import getWeb3 from '../../utils/getWeb3'
 import BigNumber from 'bignumber.js';
 import co from 'co';
@@ -38,27 +38,25 @@ class TokenFunctions extends Component {
     let that = this;
     co(function* () {
       const web3 = that.state.web3;
-      const contract = require('truffle-contract')
+      const contract = require('truffle-contract');
 
-      const crowdsale = contract(TovarCoinCrowdsale)
-      crowdsale.setProvider(that.state.web3.currentProvider)
+      const crowdsaleAbstraction = contract(TovarCoinCrowdsale);
+      crowdsaleAbstraction.setProvider(that.state.web3.currentProvider);
 
-      const crowdsaleInstance = yield crowdsale.deployed();
-      const tovarCoinAddress = yield crowdsaleInstance.token();
+      const crowdsale = yield crowdsaleAbstraction.deployed();
+      const tovarCoinAddress = yield crowdsale.token();
 
       const tovarCoinAbstraction = web3.eth.contract(TovarCoin.abi);
       const tovarCoin = tovarCoinAbstraction.at(tovarCoinAddress);
-      console.log(tovarCoin);
-      let name = yield tvcUtils.toPromise(tovarCoin.name);
 
       that.setState({
         tovarCoin,
         address: tovarCoin.address,
-        name: yield tvcUtils.toPromise(tovarCoin.name),
-        owner: yield tvcUtils.toPromise(tovarCoin.owner),
-        symbol: yield tvcUtils.toPromise(tovarCoin.symbol),
-        totalSupply: new BigNumber(yield tvcUtils.toPromise(tovarCoin.totalSupply)).toString(),
-        decimals: new BigNumber(yield tvcUtils.toPromise(tovarCoin.decimals)).toString()
+        name: yield contractToPromise(tovarCoin.name),
+        owner: yield contractToPromise(tovarCoin.owner),
+        symbol: yield contractToPromise(tovarCoin.symbol),
+        totalSupply: new BigNumber(yield contractToPromise(tovarCoin.totalSupply)).toString(),
+        decimals: new BigNumber(yield contractToPromise(tovarCoin.decimals)).toString()
       });
 
     })
