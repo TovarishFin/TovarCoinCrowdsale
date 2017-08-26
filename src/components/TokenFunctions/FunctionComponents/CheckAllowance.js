@@ -16,40 +16,39 @@ class CheckAllowance extends Component {
 
   validateAddress(e) {
     let address = e.target.value;
-    let isAddress = this.state.web3.isAddress;
+    let isAddress = this.props.web3.isAddress;
     this.setState({
       [e.target.name]: e.target.value,
       [`${e.target.name}Error`]: isAddress(address) ? null : 'Please enter a valid Ethereum address.'
     });
   }
-  //funds 0xf3fd29E7f525fdBadBf96FABc8587d477aEac895
-  //spender 0xa967406788991F6e0FF4De7a3297dFffe8293516
-  checkAllowance(e) {
-    let tovarCoin = this.state.tovarCoin;
-    let owner = this.state.ownerCheckAddress;
-    let spender = this.state.spenderCheckAddress;
-    let ownerValid = !this.state.ownerCheckAddressError;
-    let spenderValid = !this.state.spenderCheckAddressError;
-    console.log(owner, spender, ownerValid, spenderValid)
-    if(owner && spender && ownerValid && spenderValid) {
-      tovarCoin.allowance(owner, spender, (err, res) => {
-        console.log(err, res);
-        if(err) {
-          this.setState({
-            messageText: `An error occurred: ${err}`
-          });
-          this.handleMessageOpen();
-        } else {
-          this.setState({
-            spenderAllowance: new BigNumber(res).toString()
-          });
-        }
-      })
-    }
-
-  }
 
   render() {
+
+    let checkAllowance = () => {
+      let tovarCoin = this.props.tovarCoin;
+      let owner = this.state.ownerCheckAddress;
+      let spender = this.state.spenderCheckAddress;
+      let ownerValid = !this.state.ownerCheckAddressError;
+      let spenderValid = !this.state.spenderCheckAddressError;
+      console.log(owner, spender, ownerValid, spenderValid)
+      if(owner && spender && ownerValid && spenderValid) {
+        tovarCoin.allowance(owner, spender, (err, res) => {
+          if(err) {
+            console.log(err);
+            return null;
+          }
+          console.log(new BigNumber(res).toString())
+          return new BigNumber(res).toString();
+        })
+      }
+
+    }
+
+    const allowanceMessage = (
+      <p>Address: {this.state.spenderCheckAddress} has approval to handle up to {checkAllowance()} TVR from address: {this.state.ownerCheckAddress}</p>
+    );
+
     return (
       <div>
         <h2>Check Allowance</h2>
@@ -58,7 +57,7 @@ class CheckAllowance extends Component {
           onChange={(e) => this.validateAddress(e)}
           value={this.state.ownerCheckAddress}
           errorText={this.state.ownerCheckAddressError}
-          hintText="address of approved spender"
+          hintText="address of funds"
         />
 
         <TextField
@@ -66,10 +65,10 @@ class CheckAllowance extends Component {
           onChange={(e) => this.validateAddress(e)}
           value={this.state.spenderCheckAddress}
           errorText={this.state.spenderCheckAddressError}
-          hintText="address of funds"
+          hintText="address of approved spender"
         />
 
-        <p>Address: {this.state.spenderCheckAddress} has approval to handle up to {this.state.spenderAllowance} TVR from address: {this.state.ownerCheckAddress}</p>
+      {allowanceMessage}
 
       </div>
 

@@ -9,8 +9,10 @@ import co from 'co';
 import Paper from 'material-ui/Paper';
 import Snackbar from 'material-ui/Snackbar';
 
+import FunctionSelector from './FunctionSelector';
 import Approve from './FunctionComponents/Approve';
 import CheckAllowance from './FunctionComponents/CheckAllowance';
+import Mint from './FunctionComponents/Mint';
 
 const styles = {
   block: {
@@ -38,7 +40,8 @@ class TokenFunctions extends Component {
       tovarCoin: null,
       crowdsale: null,
       messageOpen: false,
-      messageText: ''
+      messageText: '',
+      selectedFunction: 'approve'
 
     }
   }
@@ -59,7 +62,6 @@ class TokenFunctions extends Component {
       const tovarCoinAbstraction = web3.eth.contract(TovarCoin.abi);
       const tovarCoin = tovarCoinAbstraction.at(tovarCoinAddress);
 
-      console.log(tovarCoin);
       that.setState({
         crowdsale,
         tovarCoin,
@@ -69,8 +71,10 @@ class TokenFunctions extends Component {
         symbol: yield contractToPromise(tovarCoin.symbol),
         totalSupply: new BigNumber(yield contractToPromise(tovarCoin.totalSupply)).toString(),
         decimals: new BigNumber(yield contractToPromise(tovarCoin.decimals)).toString(),
-        mintingFinished: yield contractToPromise(tovarCoin.mintingFinished)
+        mintingFinished: yield contractToPromise(tovarCoin.mintingFinished),
       });
+
+      console.log(tovarCoin);
 
     })
 
@@ -103,7 +107,39 @@ class TokenFunctions extends Component {
 
   }
 
+  handleFunctionChange = (event, index, value) => {
+    this.setState({
+      selectedFunction: value
+    });
+  }
+
   render() {
+
+    const approve = (
+      <Approve web3={this.state.web3} tovarCoin={this.state.tovarCoin}/>
+    )
+
+    const checkApprove = (
+      <CheckAllowance web3={this.state.web3} tovarCoin={this.state.tovarCoin}/>
+    )
+
+    const mint = (
+      <Mint web3={this.state.web3} tovarCoin={this.state.tovarCoin}/>
+    )
+
+    let chosenFunction = () => {
+
+      let tokenFunc = this.state.selectedFunction;
+      switch(true) {
+        case tokenFunc === 'approve':
+          return approve;
+        case tokenFunc === 'checkApprove':
+          return checkApprove;
+        case tokenFunc === 'mint':
+          return mint;
+
+      }
+    }
 
     return (
       <Paper className="page">
@@ -116,18 +152,22 @@ class TokenFunctions extends Component {
         <p>TovarCoin decimals: {this.state.decimals}</p>
         <p>Minting Finished? {this.state.mintingFinished ? 'YES' : 'NO'}</p>
 
-        <Approve web3={this.state.web3} tovarCoin={this.state.tovarCoin}/>
-        <CheckAllowance web3={this.state.web3} tovarCoin={this.state.tovarCoin}/>
+        <FunctionSelector
+          selectedFunction={this.state.selectedFunction}
+          handleFunctionChange={this.handleFunctionChange}
+        />
 
-          <Snackbar
-            open={this.state.messageOpen}
-            message={this.state.messageText}
-            bodyStyle={styles.snackbar}
-            contentStyle={styles.snackbar.content}
-            onRequestClose={() => this.handleMessageClose()}
-            onActionTouchTap={() =>this.handleMessageClose()}
-            action="OK"
-          />
+      {chosenFunction()}
+
+        <Snackbar
+          open={this.state.messageOpen}
+          message={this.state.messageText}
+          bodyStyle={styles.snackbar}
+          contentStyle={styles.snackbar.content}
+          onRequestClose={() => this.handleMessageClose()}
+          onActionTouchTap={() =>this.handleMessageClose()}
+          action="OK"
+        />
 
       </Paper>
     );

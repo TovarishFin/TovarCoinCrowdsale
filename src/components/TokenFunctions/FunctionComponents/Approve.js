@@ -39,19 +39,22 @@ class Approve extends Component {
 
   approve() {
     let spender = this.state.spenderAddress;
-    let amount = new BigNumber(parseFloat(this.approveAmount.value));
+    let amount = this.approveAmount;
     let tovarCoin = this.props.tovarCoin;
-    tovarCoin.approve(spender, amount, (err, res) => {
+    tovarCoin.approve(spender, 0, (err, res) => {
       if(err) {
-        this.setState({
-          messageText: `An error occurred: ${err}`
-        });
-        this.handleMessageOpen();
+        console.log(err);
       } else {
-        console.log(res);
+        tovarCoin.approve(spender, amount, (err, res) => {
+          if(err) {
+            console.log(err);
+          } else {
+            console.log(res);
+          }
+        })
       }
 
-    })
+    });
   }
 
   render() {
@@ -61,13 +64,14 @@ class Approve extends Component {
         <TextField
           name="spenderAddress"
           onChange={(e) => this.validateAddress(e)}
+          value={this.state.spenderAddress}
           errorText={this.state.spenderAddressError}
           hintText="address of approved spender"
         />
 
         <TextField
           onChange={(e) => this.validateAmount(e)}
-          ref={(input) => {this.approveAmount = input;}}
+          value={this.state.approveAmount}
           errorText={this.state.approveAmountError}
           hintText="Amount in Ether to send"
         />
